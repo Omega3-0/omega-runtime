@@ -1,4 +1,13 @@
-"""Background workers so network-heavy tasks do not freeze the Qt event loop."""
+"""Background workers so network-heavy tasks do not freeze the Qt event loop.
+
+Lifetime contract: every worker accepts an optional ``parent`` QObject
+and forwards it to ``QThread.__init__``. Anchoring the worker into the
+main window's Qt object tree is REQUIRED — without it, the C++ QObject
+is destroyed when the Python ref drops (e.g. a slot reassigning
+``self._sync_worker = None``) and any subsequent thread cleanup or
+queued signal fast-fails in Qt6Core (``__fastfail`` at 0x1cf68 with
+exception 0xc0000409). Pass ``parent=<main_window>`` at every call site.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import QObject, QThread, Signal
 
 
 class HfDownloadWorker(QThread):
@@ -17,8 +26,15 @@ class HfDownloadWorker(QThread):
     succeeded = Signal(object)  # Path
     failed = Signal(str)
 
-    def __init__(self, repo_id: str, filename: str, dest_dir: Path) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        repo_id: str,
+        filename: str,
+        dest_dir: Path,
+        *,
+        parent: QObject | None = None,
+    ) -> None:
+        super().__init__(parent)
         self._repo_id = repo_id
         self._filename = filename
         self._dest_dir = dest_dir
@@ -55,8 +71,9 @@ class ChatCompletionWorker(QThread):
         headers: dict[str, str],
         *,
         timeout_s: float = 300.0,
+        parent: QObject | None = None,
     ) -> None:
-        super().__init__()
+        super().__init__(parent)
         self._url = url
         self._payload = payload
         self._headers = headers
@@ -102,8 +119,9 @@ class ChatStreamWorker(QThread):
         headers: dict[str, str],
         *,
         timeout_s: float = 300.0,
+        parent: QObject | None = None,
     ) -> None:
-        super().__init__()
+        super().__init__(parent)
         self._url = url
         self._payload = payload
         self._headers = headers
@@ -164,8 +182,14 @@ class UrlDownloadWorker(QThread):
     succeeded = Signal(object)  # Path
     failed = Signal(str)
 
-    def __init__(self, url: str, dest: Path) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        url: str,
+        dest: Path,
+        *,
+        parent: QObject | None = None,
+    ) -> None:
+        super().__init__(parent)
         self._url = url
         self._dest = dest
 
@@ -187,8 +211,8 @@ class LogReaderWorker(QThread):
 
     line = Signal(str)
 
-    def __init__(self, pipe) -> None:
-        super().__init__()
+    def __init__(self, pipe, *, parent: QObject | None = None) -> None:
+        super().__init__(parent)
         self._pipe = pipe
         self._running = True
 
@@ -217,8 +241,9 @@ class ModelSyncWorker(QThread):
         headers: dict[str, str],
         *,
         timeout_s: float = 5.0,
+        parent: QObject | None = None,
     ) -> None:
-        super().__init__()
+        super().__init__(parent)
         self._url = url
         self._headers = headers
         self._timeout_s = timeout_s
@@ -257,8 +282,9 @@ class ServerPatchWorker(QThread):
         headers: dict[str, str],
         *,
         timeout_s: float = 5.0,
+        parent: QObject | None = None,
     ) -> None:
-        super().__init__()
+        super().__init__(parent)
         self._url = url
         self._payload = payload
         self._headers = headers

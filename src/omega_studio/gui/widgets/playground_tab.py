@@ -296,7 +296,7 @@ class PlaygroundTab(QWidget):
 
         self._append_streaming_assistant_start()
 
-        worker = ChatStreamWorker(url, payload, self._headers())
+        worker = ChatStreamWorker(url, payload, self._headers(), parent=self)
         self._stream_worker = worker
         worker.chunk.connect(self._on_chunk)
         worker.finished_ok.connect(self._on_stream_finished)

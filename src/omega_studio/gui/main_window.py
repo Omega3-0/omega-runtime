@@ -887,7 +887,9 @@ class MainWindow(QMainWindow):
             if gs.omega_api_key.strip():
                 headers["Authorization"] = f"Bearer {gs.omega_api_key.strip()}"
             self._log_api("PATCH", url)
-            worker = ServerPatchWorker(url, {"ui_overrides": rec.ui_overrides}, headers)
+            worker = ServerPatchWorker(
+                url, {"ui_overrides": rec.ui_overrides}, headers, parent=self
+            )
             self._patch_worker = worker
             worker.succeeded.connect(lambda code: self._on_patch_succeeded(code, url))
             worker.http_error.connect(lambda code, body: self._on_patch_http_error(code, body, url))
@@ -961,7 +963,7 @@ class MainWindow(QMainWindow):
             hdrs["Authorization"] = f"Bearer {gs.omega_api_key.strip()}"
 
         self._log_api("GET", url)
-        worker = ModelSyncWorker(url, hdrs)
+        worker = ModelSyncWorker(url, hdrs, parent=self)
         self._sync_worker = worker
         worker.succeeded.connect(self._on_sync_finished)
         worker.failed.connect(self._on_sync_failed)
@@ -1169,7 +1171,7 @@ class MainWindow(QMainWindow):
         self.lbl_dl_status.setText(f"Hugging Face download… <b>{repo}</b> · <code>{fn}</code>")
         self._set_download_controls_busy(True)
 
-        worker = HfDownloadWorker(repo, fn, dest)
+        worker = HfDownloadWorker(repo, fn, dest, parent=self)
         self._hf_worker = worker
         worker.progress_ratio.connect(self._on_hf_progress)
         worker.succeeded.connect(self._hf_download_succeeded)
@@ -1209,7 +1211,7 @@ class MainWindow(QMainWindow):
         self.lbl_dl_status.setText(f"Direct URL · <code>{u_disp}</code>")
         self._set_download_controls_busy(True)
 
-        worker = UrlDownloadWorker(url, dest)
+        worker = UrlDownloadWorker(url, dest, parent=self)
         self._url_worker = worker
         worker.progress_ratio.connect(self._on_hf_progress)
         worker.succeeded.connect(self._url_download_succeeded)
@@ -1480,7 +1482,7 @@ class MainWindow(QMainWindow):
         # Start log reader
         if self._server_proc.stdout is not None:
             self._log_line(f"Server started (pid {self._server_proc.pid})", tag="SERVER")
-            self._log_reader = LogReaderWorker(self._server_proc.stdout)
+            self._log_reader = LogReaderWorker(self._server_proc.stdout, parent=self)
             self._log_reader.line.connect(self._on_server_log_line)
             self._log_reader.finished.connect(self._log_reader.deleteLater)
             self._log_reader.start()
