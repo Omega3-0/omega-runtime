@@ -1,0 +1,3 @@
+# DML variant: replaces base onnxruntime with onnxruntime-directml
+-r requirements.txt
+onnxruntime-directml>=1.18,<2.0

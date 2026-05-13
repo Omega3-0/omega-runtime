@@ -1,0 +1,62 @@
+name: Feature request
+description: Propose a new capability or improvement
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: please check [CONTRIBUTING.md](../../CONTRIBUTING.md)
+        for the project's design priorities (sovereignty, OpenAI-spec
+        compliance, observability). Features that conflict with those
+        usually get declined.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: The user-facing problem, NOT the proposed solution.
+      placeholder: |
+        "When I do X with model Y, I have to manually do Z because..."
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: |
+        How the feature should work from an operator's perspective.
+        API shape, CLI flag, GUI control — whichever is the surface.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What would NOT work, and why?
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Which lane?
+      multiple: true
+      options:
+        - Server API (FastAPI / OpenAI-compat)
+        - CLI (serve, daemon, daemon-stop)
+        - GUI (PySide6)
+        - Inference engine (llama-cpp, ONNX)
+        - Build / packaging (PyInstaller)
+        - Docs
+        - Observability (logs, metrics, request_id)
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: doctrine
+    attributes:
+      label: Doctrine check
+      description: Confirm the proposal aligns with project design priorities
+      options:
+        - label: No telemetry, phone-home, or anonymous metrics
+          required: true
+        - label: No vendor account model or revocable license shapes
+          required: true
+        - label: Doesn't conflict with OpenAI-spec where we claim compatibility
+          required: true

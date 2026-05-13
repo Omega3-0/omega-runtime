@@ -1,0 +1,2 @@
+# Vulkan variant: uses base onnxruntime
+-r requirements.txt

@@ -1,0 +1,4 @@
+# This file exists so `models/` survives in git even when no model
+# weights are committed. The .gitignore excludes the actual weight
+# files (*.gguf, *.onnx, *.safetensors, *.bin) — drop your own
+# files into this directory at runtime.

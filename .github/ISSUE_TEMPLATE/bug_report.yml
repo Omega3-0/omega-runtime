@@ -1,0 +1,71 @@
+name: Bug report
+description: Something is misbehaving and you have repro steps
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. The fields below are
+        what we actually need to triage quickly — please don't skip them.
+
+        For security-sensitive issues, see [SECURITY.md](../../SECURITY.md)
+        and report privately.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: One paragraph. What did you expect, what actually happened?
+      placeholder: "I called POST /v1/chat/completions with X and expected Y, but got Z..."
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Repro steps
+      description: Exact CLI invocation + request payload. Copy-pasteable.
+      render: shell
+      placeholder: |
+        # 1. Start the server
+        Omega3.0-portable-Server.exe daemon --port 11434 --pid-file ./test.pid
+        # 2. Send this request
+        curl -X POST http://127.0.0.1:11434/v1/chat/completions \
+          -H "Content-Type: application/json" \
+          -d '{"model": "...", "messages": [...]}'
+    validations:
+      required: true
+  - type: input
+    id: request-id
+    attributes:
+      label: X-Request-ID of the failing request
+      description: |
+        Every response carries `X-Request-ID`. Paste it here; we'll grep
+        logs by that ID for the relevant trace. Skip if not applicable.
+      placeholder: "e.g. 4ea8270bf33f4fd1b2b784b0dc5b2abe"
+  - type: textarea
+    id: server-log
+    attributes:
+      label: Server log excerpt
+      description: |
+        `Get-Content %LOCALAPPDATA%\Omega3Portable\daemon\daemon.log -Tail 50`
+        — or whatever 20-50 line window covers the failure.
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: From `GET /v1/version` (e.g. `{"version":"0.1.0","omega_variant":"cpu"}`)
+      placeholder: "0.1.0 / cpu"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS / Python
+      placeholder: "Windows 11 Home 10.0.26300 / Python 3.12.13"
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: GPU, model file used, custom env vars, anything else relevant

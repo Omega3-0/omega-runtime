@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: pytest + ruff (Windows)
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+
+      - name: Install dependencies (abetlen wheel index for llama-cpp-python)
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          # The abetlen extra-index ships pre-built llama-cpp-python wheels.
+          # PyPI installs require CMake + MSVC + hit MAX_PATH on the vendored
+          # Svelte tree under llama.cpp/tools/server/webui — CI runners
+          # can't recover from that.
+          python -m pip install --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu/ -r requirements.txt
+          python -m pip install -e ".[dev]"
+
+      - name: Ruff lint
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+      - name: Pytest
+        run: python -m pytest tests/ -v
+
+  # Server-core parity check on Linux — the FastAPI/middleware layer is
+  # portable; only Windows-specific paths (daemon spawn, build scripts,
+  # PySide6 GUI bits) are excluded. Catches regressions where a
+  # Windows-only assumption leaks into shared code.
+  test-linux-core:
+    name: pytest (Linux, server-core subset)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu/ -r requirements.txt
+          python -m pip install -e ".[dev]"
+      - name: Pytest (skip Windows-only)
+        run: |
+          # Exclude tests that explicitly assert Windows behavior
+          # (taskkill, _MEI extraction quirks, etc).
+          python -m pytest tests/ -v \
+            --deselect tests/test_daemon_stop.py::test_daemon_stop_windows_taskkill

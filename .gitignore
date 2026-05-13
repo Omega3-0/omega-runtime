@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Virtual environments (any local recipe — dev, portable, release)
+.venv/
+.venv-portable/
+.venv-release/
+.env/
+env/
+venv/
+
+# Embedded Python sidecar (bootstrapped by scripts/bootstrap_embedded_python.ps1)
+runtime/python/
+
+# PyInstaller build artifacts (regeneratable from source)
+build/
+dist/
+
+# Model weights — too large for git; users supply their own
+models/*.gguf
+models/*.onnx
+models/*.safetensors
+models/*.bin
+# Keep the directory itself trackable
+!models/.gitkeep
+
+# Vendored accelerator binaries (large, harvested per-host)
+vendor/accelerators/bin/
+vendor/lemonade/bin/
+
+# Per-user state and runtime artifacts
+*.log
+*.log.*
+*.pid
+*.broken
+*.partial
+*_MEI*/
+RELEASE-MANIFEST.txt
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
+
+# Lock files generated at build time
+requirements-lock.txt
