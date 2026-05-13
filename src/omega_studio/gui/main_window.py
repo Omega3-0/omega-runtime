@@ -822,9 +822,23 @@ class MainWindow(QMainWindow):
 
     def _on_models_selection_changed(self) -> None:
         mid = self._selected_model_id_from_table()
-        self.le_edit_mid.setText(mid)
+        # Bail BEFORE writing to le_edit_mid when there's no selection.
+        # The 4s polling refresh calls `_apply_model_search` which does
+        # `setRowCount(0)` to rebuild the table — that briefly empties
+        # the selection model and fires this slot with mid="". Without
+        # this guard, every refresh would overwrite the registry-fields
+        # inputs the operator is mid-typing.
         if not mid:
             return
+        # Also skip overwriting if the registry-edit widgets currently
+        # have keyboard focus — the operator is actively editing them
+        # and we shouldn't clobber that with a stale row's data, even
+        # when the row selection legitimately changed in the background.
+        active = self.focusWidget()
+        editing = active in (self.le_edit_mid, self.cb_accel, self.chk_pin)
+        if editing:
+            return
+        self.le_edit_mid.setText(mid)
         self._persist_last_model_selection()
         reg = load_registry()
         if mid not in reg.models:
