@@ -1,7 +1,5 @@
 import logging
 
-import pytest
-
 from omega_studio.resource_manager import ResourceManager
 
 
@@ -34,6 +32,7 @@ def test_eviction_skips_pinned():
 #   - which models were skipped because they were pinned
 # These tests assert the structured fields are present so log
 # regressions show up here, not in production forensics.
+
 
 def _capture_logs(caplog_fixture, level=logging.INFO):
     caplog_fixture.set_level(level, logger="omega_studio.resource")
@@ -149,8 +148,7 @@ def test_eviction_failure_logs_with_reason(caplog):
     failures = [
         r
         for r in caplog.records
-        if r.name == "omega_studio.resource"
-        and r.getMessage().startswith("eviction_failed")
+        if r.name == "omega_studio.resource" and r.getMessage().startswith("eviction_failed")
     ]
     assert failures
     msg = failures[0].getMessage()

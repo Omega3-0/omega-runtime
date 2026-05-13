@@ -87,7 +87,9 @@ class Sidebar(QWidget):
         outer.addWidget(brand)
 
         sub = QLabel("Runtime Studio")
-        sub.setStyleSheet("font-size:11px;font-weight:600;color:#9aa3b8;padding-left:18px;padding-bottom:10px;")
+        sub.setStyleSheet(
+            "font-size:11px;font-weight:600;color:#9aa3b8;padding-left:18px;padding-bottom:10px;"
+        )
         outer.addWidget(sub)
 
         divider = QFrame()

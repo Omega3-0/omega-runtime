@@ -42,6 +42,7 @@ def apply_env_overrides(reg: RegistryFile) -> RegistryFile:
         pass
     return reg
 
+
 MODEL_SUFFIXES = {".gguf", ".ggml", ".onnx", ".bin", ".safetensors", ".pt", ".pth", ".engine"}
 
 SAFE_ID = re.compile(r"[^a-zA-Z0-9._-]+")

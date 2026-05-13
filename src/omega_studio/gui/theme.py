@@ -379,9 +379,6 @@ def section_title_html(text: str) -> str:
     """Dashboard / tab intro line (RichText QLabel)."""
 
     esc = (
-        text.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
+        text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
     )
     return f'<span style="font-size:16px;font-weight:700;color:#3db8c6">{esc}</span>'

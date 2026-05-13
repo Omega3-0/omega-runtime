@@ -177,9 +177,9 @@ class PlaygroundTab(QWidget):
                     f'<div style="margin:10px 0;padding:10px 14px;background:#1b1f28;'
                     f'border-radius:8px;border-left:3px solid #3db8c6;">'
                     f'<div style="color:#3db8c6;font-weight:700;font-size:12px;">'
-                    f'You</div>'
+                    f"You</div>"
                     f'<div style="color:#e8eaf0;">{self._esc_html(content)}</div>'
-                    f'</div>'
+                    f"</div>"
                 )
             elif role == "assistant":
                 parsed = parse_thinking(content)
@@ -188,9 +188,9 @@ class PlaygroundTab(QWidget):
                     f'<div style="margin:10px 0;padding:10px 14px;background:#1b1f28;'
                     f'border-radius:8px;border-left:3px solid #4ade80;">'
                     f'<div style="color:#4ade80;font-weight:700;font-size:12px;margin-bottom:4px;">'
-                    f'Assistant</div>'
+                    f"Assistant</div>"
                     f'<div style="color:#e8eaf0;">{self._esc_html(visible)}</div>'
-                    f'</div>'
+                    f"</div>"
                 )
         self.txt_chat.setHtml("".join(parts))
         self.txt_chat.moveCursor(self.txt_chat.textCursor().MoveOperation.End)
@@ -200,7 +200,7 @@ class PlaygroundTab(QWidget):
             '<div style="margin:10px 0;padding:10px 14px;background:#1b1f28;'
             'border-radius:8px;border-left:3px solid #4ade80;">'
             '<div style="color:#4ade80;font-weight:700;font-size:12px;margin-bottom:4px;">'
-            'Assistant</div>'
+            "Assistant</div>"
             '<div style="color:#e8eaf0;">'
         )
         self.txt_chat.moveCursor(self.txt_chat.textCursor().MoveOperation.End)
@@ -220,10 +220,7 @@ class PlaygroundTab(QWidget):
     @staticmethod
     def _esc_html(s: str) -> str:
         return (
-            s.replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-            .replace('"', "&quot;")
+            s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
         )
 
     def _reload_models(self) -> None:

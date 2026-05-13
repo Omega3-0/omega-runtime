@@ -57,9 +57,7 @@ def order_ort_providers(
 ) -> list[str]:
     """Order ORT EPs: *preferred* (or default) ∩ *available*, then the rest."""
     avail = set(str(x) for x in available)
-    pref: tuple[str, ...] = (
-        tuple(preferred) if preferred is not None else PREFERRED_ORT_ORDER
-    )
+    pref: tuple[str, ...] = tuple(preferred) if preferred is not None else PREFERRED_ORT_ORDER
     ordered = [p for p in pref if p in avail]
     if ordered:
         rest = sorted(avail - set(ordered))

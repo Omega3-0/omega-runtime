@@ -135,10 +135,9 @@ def create_app() -> FastAPI:
         # API at all when OMEGA_API_KEY is set. Let CORSMiddleware
         # (downstream in the chain) handle preflight; the actual
         # follow-up request will be auth-gated normally.
-        if (
-            request.method == "OPTIONS"
-            and "access-control-request-method" in {k.lower() for k in request.headers.keys()}
-        ):
+        if request.method == "OPTIONS" and "access-control-request-method" in {
+            k.lower() for k in request.headers.keys()
+        }:
             return await call_next(request)
         path = request.url.path or ""
         gated = path == "/v1" or path.startswith("/v1/")

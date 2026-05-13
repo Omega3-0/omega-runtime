@@ -14,14 +14,12 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-log = logging.getLogger("omega_studio.routes_v1")
-
 from omega_studio import __version__
 from omega_studio.config import ModelRecord
 from omega_studio.inference.backends import (
+    _resolve_backend,
     effective_llama_n_gpu_layers,
     get_omega_variant,
-    _resolve_backend,
 )
 from omega_studio.inference.engine import estimate_vram_stub_mb
 from omega_studio.inference.thinking_parser import parse_thinking
@@ -32,6 +30,8 @@ from omega_studio.registry import (
     save_registry,
 )
 from omega_studio.server.tool_call_repair import repair_response_tool_calls
+
+log = logging.getLogger("omega_studio.routes_v1")
 
 router = APIRouter(prefix="/v1", tags=["v1"])
 
@@ -232,9 +232,7 @@ def _validate_response_format(rf: dict[str, Any] | None) -> str | None:
                 400, "response_format.type=json_schema requires a json_schema object"
             )
         if not isinstance(schema.get("schema"), dict):
-            raise HTTPException(
-                400, "response_format.json_schema.schema must be an object"
-            )
+            raise HTTPException(400, "response_format.json_schema.schema must be an object")
     return rf_type
 
 
@@ -254,8 +252,7 @@ def _enforce_json_response(response: dict[str, Any]) -> None:
         if not isinstance(content, str) or not content.strip():
             raise HTTPException(
                 502,
-                f"model returned empty content under response_format=json_*; "
-                f"choice index={idx}",
+                f"model returned empty content under response_format=json_*; choice index={idx}",
             )
         try:
             parsed = json.loads(content)
@@ -547,6 +544,7 @@ def _prepare_gguf_model(
         return _loaded_ids_fn(engine)
 
     if not loaded_before:
+
         def pre_load_ids_fn() -> list[str]:
             loaded = loaded_ids_fn()
             return loaded if model_id in loaded else loaded + [model_id]
@@ -880,6 +878,7 @@ def _prepare_onnx_embedder(
         return _loaded_ids_fn(engine)
 
     if not loaded_before:
+
         def pre_load_ids_fn() -> list[str]:
             loaded = loaded_ids_fn()
             return loaded if model_id in loaded else loaded + [model_id]

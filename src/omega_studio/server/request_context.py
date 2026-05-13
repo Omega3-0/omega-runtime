@@ -25,9 +25,7 @@ import logging
 import re
 import uuid
 
-_REQUEST_ID: contextvars.ContextVar[str] = contextvars.ContextVar(
-    "omega_request_id", default=""
-)
+_REQUEST_ID: contextvars.ContextVar[str] = contextvars.ContextVar("omega_request_id", default="")
 
 # Safety net for upstream-supplied IDs. We accept reasonable shapes
 # (UUIDs, short alphanumeric tags, hyphen-separated) but cap length so
@@ -83,12 +81,14 @@ class RequestIdLogFilter(logging.Filter):
         return True
 
 
-def install_request_id_filter(logger_names: tuple[str, ...] = (
-    "omega_studio",
-    "uvicorn",
-    "uvicorn.access",
-    "uvicorn.error",
-)) -> None:
+def install_request_id_filter(
+    logger_names: tuple[str, ...] = (
+        "omega_studio",
+        "uvicorn",
+        "uvicorn.access",
+        "uvicorn.error",
+    ),
+) -> None:
     """Attach the RequestIdLogFilter to relevant loggers so log records
     emitted during request handling get the request_id stamp. Idempotent
     — calling more than once attaches the same filter instance only

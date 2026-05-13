@@ -79,9 +79,7 @@ class _FakeEngine:
         }
 
     def chat_completion_stream(self, *args: Any, **kwargs: Any):
-        yield {
-            "choices": [{"index": 0, "delta": {"role": "assistant", "content": "Hel"}}]
-        }
+        yield {"choices": [{"index": 0, "delta": {"role": "assistant", "content": "Hel"}}]}
         yield {"choices": [{"index": 0, "delta": {"content": "lo"}}]}
 
 
@@ -276,7 +274,10 @@ def test_chat_completion_stream_chunks_share_one_id(patched_registry, monkeypatc
             # OWN chatcmpl id (different from ours).
             yield {"id": "llama-id-A", "choices": [{"index": 0, "delta": {"role": "assistant"}}]}
             yield {"id": "llama-id-B", "choices": [{"index": 0, "delta": {"content": "hi"}}]}
-            yield {"id": "llama-id-C", "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]}
+            yield {
+                "id": "llama-id-C",
+                "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+            }
 
     app = create_app()
     with TestClient(app) as client:
@@ -293,7 +294,7 @@ def test_chat_completion_stream_chunks_share_one_id(patched_registry, monkeypatc
     for ln in raw.split("\n"):
         if not ln.startswith("data: "):
             continue
-        payload = ln[len("data: "):].strip()
+        payload = ln[len("data: ") :].strip()
         if payload == "[DONE]":
             continue
         payloads.append(json.loads(payload))
@@ -322,7 +323,9 @@ def test_chat_completion_stream_finish_reason_only_at_end(patched_registry, monk
     class FinishReasonStreamEngine(_FakeEngine):
         def chat_completion_stream(self, *args: Any, **kwargs: Any):
             yield {"choices": [{"index": 0, "delta": {"role": "assistant"}}]}
-            yield {"choices": [{"index": 0, "delta": {"content": "<think>reasoning</think>visible"}}]}
+            yield {
+                "choices": [{"index": 0, "delta": {"content": "<think>reasoning</think>visible"}}]
+            }
             # llama-cpp-python's native end marker — must be stripped
             yield {"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]}
 
@@ -342,14 +345,15 @@ def test_chat_completion_stream_finish_reason_only_at_end(patched_registry, monk
     for ln in raw.split("\n"):
         if not ln.startswith("data: "):
             continue
-        payload = ln[len("data: "):].strip()
+        payload = ln[len("data: ") :].strip()
         if payload == "[DONE]":
             continue
         payloads.append(json.loads(payload))
 
     # Find which chunks carry finish_reason
     finish_chunks = [
-        i for i, p in enumerate(payloads)
+        i
+        for i, p in enumerate(payloads)
         if any((c.get("finish_reason") == "stop") for c in p.get("choices", []))
     ]
     assert len(finish_chunks) == 1, (
@@ -363,7 +367,8 @@ def test_chat_completion_stream_finish_reason_only_at_end(patched_registry, monk
     )
     # AND the visible content (flush tail) appears BEFORE the finish chunk
     content_indexes = [
-        i for i, p in enumerate(payloads)
+        i
+        for i, p in enumerate(payloads)
         if any(((c.get("delta") or {}).get("content") == "visible") for c in p.get("choices", []))
     ]
     assert content_indexes, "visible content not present in stream"
@@ -413,6 +418,7 @@ def test_chat_completion_stream_forwards_usage_tail(patched_registry, monkeypatc
 # BEFORE the [DONE] sentinel. All earlier chunks carry no usage.
 # Strict clients (openai-python, langchain) parse this contract.
 
+
 def _parse_sse_stream(raw: str) -> list[dict[str, Any]]:
     return [
         json.loads(ln[len("data: ") :])
@@ -454,9 +460,7 @@ def test_chat_response_model_id_overrides_engine_value(patched_registry, monkeyp
         )
     assert r.status_code == 200
     body = r.json()
-    assert body["model"] == "stub-model", (
-        f"engine's model field leaked: {body['model']!r}"
-    )
+    assert body["model"] == "stub-model", f"engine's model field leaked: {body['model']!r}"
 
 
 def test_chat_stream_chunk_model_id_overrides_engine_value(patched_registry, monkeypatch):
@@ -498,9 +502,7 @@ def test_chat_stream_chunk_model_id_overrides_engine_value(patched_registry, mon
         if ln.startswith("data: ") and ln[len("data: ") :].strip() != "[DONE]"
     ]
     models_seen = {p.get("model") for p in payloads if "model" in p}
-    assert models_seen == {"stub-model"}, (
-        f"streaming chunks leaked model field: {models_seen}"
-    )
+    assert models_seen == {"stub-model"}, f"streaming chunks leaked model field: {models_seen}"
 
 
 def test_embedding_response_model_id_overrides_engine_value(patched_registry, monkeypatch):
@@ -529,9 +531,7 @@ def test_embedding_response_model_id_overrides_engine_value(patched_registry, mo
     assert r.json()["model"] == "stub-model"
 
 
-def test_stream_synthesizes_usage_when_engine_lacks_native_usage(
-    patched_registry, monkeypatch
-):
+def test_stream_synthesizes_usage_when_engine_lacks_native_usage(patched_registry, monkeypatch):
     """Real-world fallback: llama-cpp-python (any version we ship)
     doesn't emit a native `usage` field in streaming output. When
     the client requested `stream_options.include_usage=true` we MUST
@@ -571,9 +571,9 @@ def test_stream_synthesizes_usage_when_engine_lacks_native_usage(
         if ln.startswith("data: ") and ln[len("data: ") :].strip() != "[DONE]"
     ]
     usage_chunks = [
-        p for p in payloads
-        if isinstance(p.get("usage"), dict)
-        and p["usage"].get("total_tokens") is not None
+        p
+        for p in payloads
+        if isinstance(p.get("usage"), dict) and p["usage"].get("total_tokens") is not None
     ]
     assert len(usage_chunks) == 1, (
         f"expected exactly one synthesized usage chunk; got {len(usage_chunks)}"
@@ -588,9 +588,7 @@ def test_stream_synthesizes_usage_when_engine_lacks_native_usage(
     assert usage_chunks[0]["choices"] == []
 
 
-def test_stream_no_usage_when_engine_lacks_count_tokens(
-    patched_registry, monkeypatch
-):
+def test_stream_no_usage_when_engine_lacks_count_tokens(patched_registry, monkeypatch):
     """Defensive: when the engine has NO count_tokens method (e.g.
     a future backend), the synthesizer must NOT crash and must NOT
     emit a usage chunk with zeros — just skip. Better than lying
@@ -622,9 +620,9 @@ def test_stream_no_usage_when_engine_lacks_count_tokens(
         if ln.startswith("data: ") and ln[len("data: ") :].strip() != "[DONE]"
     ]
     usage_chunks = [
-        p for p in payloads
-        if isinstance(p.get("usage"), dict)
-        and p["usage"].get("total_tokens") is not None
+        p
+        for p in payloads
+        if isinstance(p.get("usage"), dict) and p["usage"].get("total_tokens") is not None
     ]
     assert len(usage_chunks) == 0, (
         "must not emit synthetic usage chunk when engine has no tokenizer"
@@ -664,9 +662,7 @@ def test_stream_options_not_forwarded_to_engine(patched_registry, monkeypatch):
         }
         with client.stream("POST", "/v1/chat/completions", json=body) as resp:
             list(resp.iter_text())
-    assert "stream_options" not in seen_kwargs, (
-        f"stream_options leaked to engine: {seen_kwargs}"
-    )
+    assert "stream_options" not in seen_kwargs, f"stream_options leaked to engine: {seen_kwargs}"
 
 
 def test_stream_include_usage_emits_dedicated_tail_chunk(patched_registry, monkeypatch):
@@ -699,7 +695,8 @@ def test_stream_include_usage_emits_dedicated_tail_chunk(patched_registry, monke
             raw_text = "".join(resp.iter_text())
     payloads = _parse_sse_stream(raw_text)
     usage_chunks = [
-        i for i, p in enumerate(payloads)
+        i
+        for i, p in enumerate(payloads)
         if isinstance(p.get("usage"), dict) and p["usage"].get("total_tokens") is not None
     ]
     assert len(usage_chunks) == 1, (
@@ -711,10 +708,10 @@ def test_stream_include_usage_emits_dedicated_tail_chunk(patched_registry, monke
     assert usage_chunk["usage"]["prompt_tokens"] == 7
     assert usage_chunk["usage"]["completion_tokens"] == 2
     finish_chunks = [
-        i for i, p in enumerate(payloads)
+        i
+        for i, p in enumerate(payloads)
         if any(
-            isinstance(c, dict) and c.get("finish_reason") is not None
-            for c in p.get("choices", [])
+            isinstance(c, dict) and c.get("finish_reason") is not None for c in p.get("choices", [])
         )
     ]
     assert finish_chunks, "no finish_reason chunk present"
@@ -756,9 +753,9 @@ def test_stream_include_usage_intermediate_chunks_have_no_usage(patched_registry
             raw_text = "".join(resp.iter_text())
     payloads = _parse_sse_stream(raw_text)
     populated = [
-        p for p in payloads
-        if isinstance(p.get("usage"), dict)
-        and p["usage"].get("total_tokens") is not None
+        p
+        for p in payloads
+        if isinstance(p.get("usage"), dict) and p["usage"].get("total_tokens") is not None
     ]
     assert len(populated) == 1, "duplicate usage across chunks — spec violation"
     # And the one populated chunk is the dedicated tail (choices=[])
@@ -785,9 +782,9 @@ def test_stream_without_include_usage_emits_no_usage_chunk(patched_registry, mon
             raw_text = "".join(resp.iter_text())
     payloads = _parse_sse_stream(raw_text)
     usage_present = [
-        p for p in payloads
-        if isinstance(p.get("usage"), dict)
-        and p["usage"].get("total_tokens") is not None
+        p
+        for p in payloads
+        if isinstance(p.get("usage"), dict) and p["usage"].get("total_tokens") is not None
     ]
     assert not usage_present, (
         f"unexpected usage chunk(s) when include_usage not set: {usage_present}"
@@ -810,9 +807,8 @@ def test_stream_without_include_usage_emits_no_usage_chunk(patched_registry, mon
 # mid-stream exception. Both run gen()'s finally; the disconnect
 # path is the same finally with a different trigger.
 
-def test_stream_calls_close_on_iterator_after_normal_completion(
-    patched_registry, monkeypatch
-):
+
+def test_stream_calls_close_on_iterator_after_normal_completion(patched_registry, monkeypatch):
     """gen() finally must call iterator.close() even on success —
     that's what releases llama's sequence slot in production."""
     monkeypatch.delenv("OMEGA_API_KEY", raising=False)
@@ -822,10 +818,12 @@ def test_stream_calls_close_on_iterator_after_normal_completion(
 
     class TrackingStream:
         def __init__(self):
-            self._chunks = iter([
-                {"choices": [{"index": 0, "delta": {"role": "assistant", "content": "ok"}}]},
-                {"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]},
-            ])
+            self._chunks = iter(
+                [
+                    {"choices": [{"index": 0, "delta": {"role": "assistant", "content": "ok"}}]},
+                    {"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]},
+                ]
+            )
 
         def __iter__(self):
             return self
@@ -857,9 +855,7 @@ def test_stream_calls_close_on_iterator_after_normal_completion(
     )
 
 
-def test_stream_calls_close_on_iterator_after_engine_exception(
-    patched_registry, monkeypatch
-):
+def test_stream_calls_close_on_iterator_after_engine_exception(patched_registry, monkeypatch):
     """gen() finally must call iterator.close() when the engine
     iterator raises mid-stream too. This is the same cleanup path
     a client disconnect triggers."""
@@ -900,14 +896,11 @@ def test_stream_calls_close_on_iterator_after_engine_exception(
     assert "[DONE]" in raw_text
     # And the iterator was closed despite the exception
     assert state["close_calls"] >= 1, (
-        f"iterator.close() not called on engine-exception path; "
-        f"close_calls={state['close_calls']}"
+        f"iterator.close() not called on engine-exception path; close_calls={state['close_calls']}"
     )
 
 
-def test_stream_iterator_without_close_method_does_not_crash(
-    patched_registry, monkeypatch
-):
+def test_stream_iterator_without_close_method_does_not_crash(patched_registry, monkeypatch):
     """Defensive: some engines (mocks, simple generators called via
     iter()) won't have a .close attribute. Our finally must not
     blow up trying to call it."""
@@ -919,16 +912,19 @@ def test_stream_iterator_without_close_method_does_not_crash(
     # getattr-not-callable branch.
     class NoCloseIterator:
         def __init__(self):
-            self._items = iter([
-                {"choices": [{"index": 0, "delta": {"content": "ok"}}]},
-                {"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]},
-            ])
+            self._items = iter(
+                [
+                    {"choices": [{"index": 0, "delta": {"content": "ok"}}]},
+                    {"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]},
+                ]
+            )
 
         def __iter__(self):
             return self
 
         def __next__(self):
             return next(self._items)
+
         # NOTE: deliberately no `close` method
 
     class NoCloseEngine(_FakeEngine):
@@ -989,9 +985,7 @@ def test_chat_completion_stream_hides_thinking_blocks(patched_registry, monkeypa
     class ThinkingStreamEngine(_FakeEngine):
         def chat_completion_stream(self, *args: Any, **kwargs: Any):
             yield {
-                "choices": [
-                    {"index": 0, "delta": {"role": "assistant", "content": "<think>sec"}}
-                ]
+                "choices": [{"index": 0, "delta": {"role": "assistant", "content": "<think>sec"}}]
             }
             yield {"choices": [{"index": 0, "delta": {"content": "ret</think>visible"}}]}
 
@@ -1395,6 +1389,7 @@ def test_studio_registry_folders_api_persists_and_updates_cache(monkeypatch, tmp
 # is out of scope here — we're stressing the server's per-request
 # isolation guarantees, not the underlying inference engine.
 
+
 class _ConcurrentChatEngine(_FakeEngine):
     """Thread-safe stub that counts calls + returns request-distinguishable content."""
 
@@ -1520,14 +1515,10 @@ def test_concurrent_streaming_chat_requests_dont_cross_wire(patched_registry, mo
                 continue
             if "id" in payload:
                 chunk_ids.add(payload["id"])
-        assert len(chunk_ids) == 1, (
-            f"single stream contained multiple chatcmpl ids: {chunk_ids}"
-        )
+        assert len(chunk_ids) == 1, f"single stream contained multiple chatcmpl ids: {chunk_ids}"
         seen_ids.update(chunk_ids)
         assert "[DONE]" in body, "stream missing terminal [DONE]"
-    assert len(seen_ids) == N, (
-        f"stream ID leakage across requests: {len(seen_ids)} unique of {N}"
-    )
+    assert len(seen_ids) == N, f"stream ID leakage across requests: {len(seen_ids)} unique of {N}"
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -1540,8 +1531,10 @@ def test_concurrent_streaming_chat_requests_dont_cross_wire(patched_registry, mo
 # clients get a string they have to re-parse downstream and discover
 # broken hours later in production.
 
+
 class _CannedChatEngine(_FakeEngine):
     """Returns canned content controllable per-request via a body field."""
+
     def __init__(self) -> None:
         super().__init__()
         self.last_chat_kwargs: dict[str, Any] | None = None
@@ -1827,6 +1820,7 @@ def test_concurrent_models_endpoint_handles_parallel_reads(patched_registry, mon
 
     app = create_app()
     with TestClient(app) as client:
+
         def _hit():
             return client.get("/v1/models")
 

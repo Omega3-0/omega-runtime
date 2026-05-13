@@ -43,6 +43,7 @@ def patched_registry(monkeypatch):
 # Unit tests for the context primitives
 # ─────────────────────────────────────────────────────────────────
 
+
 def test_new_request_id_returns_hex_uuid():
     rid = new_request_id()
     assert re.fullmatch(r"[0-9a-f]{32}", rid)
@@ -82,6 +83,7 @@ def test_sanitize_empty_and_whitespace_only_return_empty():
 # ─────────────────────────────────────────────────────────────────
 # Middleware integration tests
 # ─────────────────────────────────────────────────────────────────
+
 
 def test_response_carries_x_request_id_header(patched_registry, monkeypatch):
     """Every response — including /health — gets an X-Request-ID
@@ -152,9 +154,7 @@ def test_auth_rejected_requests_still_get_request_id(patched_registry, monkeypat
     app = create_app()
     with TestClient(app) as client:
         no_bearer = client.get("/v1/models")
-        wrong_bearer = client.get(
-            "/v1/models", headers={"Authorization": "Bearer wrong"}
-        )
+        wrong_bearer = client.get("/v1/models", headers={"Authorization": "Bearer wrong"})
     assert no_bearer.status_code == 401
     assert wrong_bearer.status_code == 403
     assert "x-request-id" in no_bearer.headers
@@ -170,7 +170,8 @@ def test_request_id_filter_stamps_log_records():
     captured: list[logging.LogRecord] = []
 
     class _Capture(logging.Handler):
-        def emit(self, record): captured.append(record)
+        def emit(self, record):
+            captured.append(record)
 
     handler = _Capture()
     handler.setLevel(logging.DEBUG)

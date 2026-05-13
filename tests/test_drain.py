@@ -36,6 +36,7 @@ def patched_registry(monkeypatch):
 # InFlightTracker — core state machine
 # ─────────────────────────────────────────────────────────────────
 
+
 def test_tracker_starts_drained_and_count_zero():
     tracker = InFlightTracker()
     assert tracker.count == 0
@@ -53,16 +54,19 @@ def test_tracker_acquire_release_increments_then_decrements():
         assert tracker.count == 1
         await tracker.release()
         assert tracker.count == 0
+
     asyncio.run(run())
 
 
 def test_tracker_release_clamped_at_zero():
     """Double-release shouldn't make count go negative — defends
     against a buggy middleware-finally that fires twice."""
+
     async def run():
         tracker = InFlightTracker()
         await tracker.release()  # before any acquire
         assert tracker.count == 0
+
     asyncio.run(run())
 
 
@@ -71,12 +75,14 @@ def test_wait_for_drain_returns_true_when_already_drained():
         tracker = InFlightTracker()
         ok = await tracker.wait_for_drain(timeout_s=1.0)
         assert ok is True
+
     asyncio.run(run())
 
 
 def test_wait_for_drain_returns_true_when_request_completes_before_timeout():
     """Spawn a 'request' (acquire), schedule a release at 50ms,
     then wait_for_drain with 5s timeout — must return True."""
+
     async def run():
         tracker = InFlightTracker()
         await tracker.acquire()
@@ -89,24 +95,28 @@ def test_wait_for_drain_returns_true_when_request_completes_before_timeout():
         ok = await tracker.wait_for_drain(timeout_s=5.0)
         assert ok is True
         assert tracker.count == 0
+
     asyncio.run(run())
 
 
 def test_wait_for_drain_returns_false_on_timeout():
     """Acquire and never release — wait_for_drain must return False
     after its timeout instead of blocking forever."""
+
     async def run():
         tracker = InFlightTracker()
         await tracker.acquire()
         ok = await tracker.wait_for_drain(timeout_s=0.05)
         assert ok is False
         assert tracker.count == 1
+
     asyncio.run(run())
 
 
 def test_drain_on_shutdown_flips_flag_and_waits():
     """drain_on_shutdown sets shutting_down=True and returns once
     the tracker drains."""
+
     async def run():
         tracker = InFlightTracker()
         await tracker.acquire()
@@ -122,6 +132,7 @@ def test_drain_on_shutdown_flips_flag_and_waits():
         assert tracker.shutting_down is True
         assert tracker.count == 0
         assert elapsed < 5.0
+
     asyncio.run(run())
 
 
@@ -139,12 +150,14 @@ def test_drain_on_shutdown_honors_timeout(monkeypatch):
         elapsed = time.monotonic() - start
         assert elapsed < 2.0, f"drain timeout did not bail; elapsed={elapsed:.2f}s"
         assert tracker.count == 1  # never drained — operator can see
+
     asyncio.run(run())
 
 
 # ─────────────────────────────────────────────────────────────────
 # Middleware integration
 # ─────────────────────────────────────────────────────────────────
+
 
 def test_inflight_count_decrements_on_normal_request(patched_registry, monkeypatch):
     """A successful request must release its slot when done — otherwise
@@ -227,9 +240,7 @@ def test_drain_state_returns_to_normal_when_flag_cleared(patched_registry, monke
         assert ok.status_code == 200
 
 
-def test_drain_state_does_not_reject_paths_outside_v1_admin(
-    patched_registry, monkeypatch
-):
+def test_drain_state_does_not_reject_paths_outside_v1_admin(patched_registry, monkeypatch):
     """Drain only gates /v1/* and /admin/*; other surfaces (root,
     docs, version helpers) stay open — they're cheap reads that don't
     hold engine slots."""

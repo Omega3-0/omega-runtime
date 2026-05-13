@@ -35,9 +35,7 @@ class ToastCard(QWidget):
         lay = QHBoxLayout(self)
         lay.setContentsMargins(14, 10, 14, 10)
         self._lbl = QLabel(message)
-        self._lbl.setStyleSheet(
-            "color:#0d1118;font-weight:600;font-size:13px;padding:2px;"
-        )
+        self._lbl.setStyleSheet("color:#0d1118;font-weight:600;font-size:13px;padding:2px;")
         self._lbl.setWordWrap(True)
         lay.addWidget(self._lbl)
 

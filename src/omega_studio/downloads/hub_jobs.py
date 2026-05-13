@@ -85,25 +85,29 @@ class HubDownloadJob:
         # 64-deep deque on the first ~64MB. Only append when % moves
         # by at least 1 point OR message changes.
         if not self.events:
-            self.events.append({
-                "progress": self.progress,
-                "bytes_done": done,
-                "bytes_total": total,
-                "rate_mbps": self.rate_mbps,
-                "message": msg or self.message,
-            })
-        else:
-            last = self.events[-1]
-            pct_delta = abs(self.progress - float(last.get("progress") or 0.0))
-            msg_changed = bool(msg) and msg != last.get("message")
-            if pct_delta >= 0.01 or msg_changed:
-                self.events.append({
+            self.events.append(
+                {
                     "progress": self.progress,
                     "bytes_done": done,
                     "bytes_total": total,
                     "rate_mbps": self.rate_mbps,
                     "message": msg or self.message,
-                })
+                }
+            )
+        else:
+            last = self.events[-1]
+            pct_delta = abs(self.progress - float(last.get("progress") or 0.0))
+            msg_changed = bool(msg) and msg != last.get("message")
+            if pct_delta >= 0.01 or msg_changed:
+                self.events.append(
+                    {
+                        "progress": self.progress,
+                        "bytes_done": done,
+                        "bytes_total": total,
+                        "rate_mbps": self.rate_mbps,
+                        "message": msg or self.message,
+                    }
+                )
 
     def to_public(self) -> dict[str, Any]:
         return {
@@ -232,8 +236,11 @@ class HubJobStore:
                 job.push(pct=0.0, msg="started")
                 self.save(job)
                 path = download_fn(
-                    repo_id, filename, dest_dir,
-                    progress=_cb, progress_bytes=_cb_bytes,
+                    repo_id,
+                    filename,
+                    dest_dir,
+                    progress=_cb,
+                    progress_bytes=_cb_bytes,
                 )
                 job.result_path = str(path)
                 job.status = "done"
@@ -272,8 +279,11 @@ class HubJobStore:
                 loop.call_soon_threadsafe(lambda: job.push(pct=0.0, msg="started"))
                 self.save(job)
                 path = download_fn(
-                    repo_id, filename, dest_dir,
-                    progress=_cb, progress_bytes=_cb_bytes,
+                    repo_id,
+                    filename,
+                    dest_dir,
+                    progress=_cb,
+                    progress_bytes=_cb_bytes,
                 )
                 job.result_path = str(path)
                 job.status = "done"

@@ -228,10 +228,7 @@ def daemon_cmd(
         # to the parent's Ctrl+C. We deliberately AVOID DETACHED_PROCESS
         # — it interacts badly with the PyInstaller onefile→onefile
         # spawn pattern (see env-scrub below).
-        kwargs["creationflags"] = (
-            subprocess.CREATE_NO_WINDOW
-            | subprocess.CREATE_NEW_PROCESS_GROUP
-        )
+        kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
         kwargs["close_fds"] = True
     log_f = open(log_path, "a", encoding="utf-8")
     # Scrub PyInstaller's parent→child onefile-coordination env vars.

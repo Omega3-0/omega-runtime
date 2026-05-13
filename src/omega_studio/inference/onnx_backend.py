@@ -27,9 +27,7 @@ class ONNXBackend:
         if ort is None:
             raise RuntimeError("onnxruntime is not installed.")
         self.model_path = str(model_path)
-        self.session = ort.InferenceSession(
-            self.model_path, providers=DEFAULT_PROVIDERS
-        )
+        self.session = ort.InferenceSession(self.model_path, providers=DEFAULT_PROVIDERS)
         log.info(
             "loaded ONNX model %s (providers: %s)",
             self.model_path,

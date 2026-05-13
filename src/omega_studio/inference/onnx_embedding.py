@@ -99,8 +99,7 @@ class ONNXEmbedder:
         self.tokenizer_path = Path(tokenizer_path)
         if not self.tokenizer_path.is_file():
             raise FileNotFoundError(
-                f"tokenizer.json not found beside ONNX model. "
-                f"Expected at: {self.tokenizer_path}"
+                f"tokenizer.json not found beside ONNX model. Expected at: {self.tokenizer_path}"
             )
 
         self.pooling: PoolingStrategy = pooling
@@ -165,9 +164,7 @@ class ONNXEmbedder:
         self.tokenizer.enable_padding()
         encodings = self.tokenizer.encode_batch(list(texts))
         input_ids = np.array([e.ids for e in encodings], dtype=np.int64)
-        attention_mask = np.array(
-            [e.attention_mask for e in encodings], dtype=np.int64
-        )
+        attention_mask = np.array([e.attention_mask for e in encodings], dtype=np.int64)
         feed: dict[str, Any] = {}
         if "input_ids" in self._input_names:
             feed["input_ids"] = input_ids

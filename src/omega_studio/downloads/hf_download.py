@@ -41,7 +41,8 @@ def download_hf_file(
         url = hf_hub_url(repo_id=repo_id, filename=filename)
         dest = dest_dir / filename
         download_url_resume(
-            url, dest,
+            url,
+            dest,
             progress=progress,
             progress_bytes=progress_bytes,
             headers=headers,

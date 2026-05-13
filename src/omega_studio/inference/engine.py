@@ -252,8 +252,7 @@ class InferenceEngine:
             inputs = list(input_value)
         else:
             raise TypeError(
-                "ONNX embedding input must be str or list[str]; "
-                f"got {type(input_value).__name__}"
+                f"ONNX embedding input must be str or list[str]; got {type(input_value).__name__}"
             )
         vectors = handle.embed(inputs)
         # Approximate token count — exact count requires per-input

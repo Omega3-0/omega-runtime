@@ -8,15 +8,13 @@ import types
 from pathlib import Path
 from typing import Any
 
-import pytest
-
 from omega_studio.downloads.hf_download import download_hf_file
 from omega_studio.downloads.hub_jobs import HubDownloadJob, HubJobStore
-
 
 # ─────────────────────────────────────────────────────────────────
 # HubDownloadJob.push_bytes — byte-level state tracking
 # ─────────────────────────────────────────────────────────────────
+
 
 def test_push_bytes_sets_byte_counts_and_progress():
     """Byte updates compute progress AND populate bytes_done/total
@@ -127,6 +125,7 @@ def test_push_bytes_events_sampled_not_per_chunk():
 # to_public — operator-visible response shape
 # ─────────────────────────────────────────────────────────────────
 
+
 def test_to_public_includes_byte_level_fields(monkeypatch):
     """The status endpoint payload must expose bytes_done/total/rate/ETA
     so a polling client can render a real progress bar."""
@@ -150,6 +149,7 @@ def test_to_public_includes_byte_level_fields(monkeypatch):
 # ─────────────────────────────────────────────────────────────────
 # download_hf_file — new progress_bytes callback wired end-to-end
 # ─────────────────────────────────────────────────────────────────
+
 
 def test_download_hf_file_passes_progress_bytes_callback(monkeypatch, tmp_path: Path):
     """When progress_bytes is supplied, download_hf_file routes via
@@ -183,9 +183,7 @@ def test_download_hf_file_passes_progress_bytes_callback(monkeypatch, tmp_path: 
     assert seen == [(500, 1000), (1000, 1000)]
 
 
-def test_download_hf_file_supports_both_callbacks_concurrently(
-    monkeypatch, tmp_path: Path
-):
+def test_download_hf_file_supports_both_callbacks_concurrently(monkeypatch, tmp_path: Path):
     """Some operators use the float callback for UI; the hub-jobs
     layer uses the byte callback for rate. Both should fire."""
     pcts: list[float] = []
@@ -223,9 +221,8 @@ def test_download_hf_file_supports_both_callbacks_concurrently(
 # HubJobStore — async runner wires progress_bytes to push_bytes
 # ─────────────────────────────────────────────────────────────────
 
-def test_hub_job_store_runs_download_and_records_bytes(
-    monkeypatch, tmp_path: Path
-):
+
+def test_hub_job_store_runs_download_and_records_bytes(monkeypatch, tmp_path: Path):
     """End-to-end via sync runner: the byte callback reaches the job
     state and populates bytes_done/total."""
     store = HubJobStore(tmp_path / "hub.sqlite")

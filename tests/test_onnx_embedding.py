@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import importlib
-import json
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pytest
@@ -19,10 +17,10 @@ from omega_studio.inference.onnx_embedding import (
     _mean_pool,
 )
 
-
 # ─────────────────────────────────────────────────────────────────
 # Pooling + normalize unit tests (pure numpy, no model required)
 # ─────────────────────────────────────────────────────────────────
+
 
 def test_l2_normalize_unit_vectors():
     v = np.array([[3.0, 4.0]], dtype=np.float32)  # norm = 5
@@ -64,9 +62,7 @@ def test_mean_pool_all_masked_returns_zeros():
 
 
 def test_cls_pool_returns_first_token():
-    last_hidden = np.array(
-        [[[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]], dtype=np.float32
-    )
+    last_hidden = np.array([[[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]], dtype=np.float32)
     out = _cls_pool(last_hidden)
     np.testing.assert_array_equal(out, [[1.0, 2.0]])
 
@@ -87,6 +83,7 @@ def test_max_pool_masks_padding_with_neg_inf():
 # ─────────────────────────────────────────────────────────────────
 # ONNXEmbedder integration with mocked session + tokenizer
 # ─────────────────────────────────────────────────────────────────
+
 
 def _make_fake_tokenizer(monkeypatch):
     """Patch tokenizers.Tokenizer.from_file to return a stub that
@@ -110,10 +107,7 @@ def _make_fake_tokenizer(monkeypatch):
             pass
 
         def encode_batch(self, texts):
-            return [
-                _FakeEncoding([1, 5, 0, 0], [1, 1, 0, 0])
-                for _ in texts
-            ]
+            return [_FakeEncoding([1, 5, 0, 0], [1, 1, 0, 0]) for _ in texts]
 
     fake = _FakeTokenizer()
 
@@ -123,6 +117,7 @@ def _make_fake_tokenizer(monkeypatch):
             return fake
 
     import tokenizers
+
     monkeypatch.setattr(tokenizers, "Tokenizer", _Loader)
     return fake
 
@@ -166,6 +161,7 @@ def _make_fake_session(monkeypatch, hidden=8):
             return [arr]
 
     import onnxruntime as ort
+
     monkeypatch.setattr(ort, "InferenceSession", _FakeSession)
     return _FakeSession
 
@@ -269,6 +265,7 @@ def test_onnx_embedder_empty_input_returns_empty(tmp_path, monkeypatch):
 # Engine.create_embedding dispatch — ONNX path returns OpenAI shape
 # ─────────────────────────────────────────────────────────────────
 
+
 def test_engine_create_embedding_routes_onnx_handle(monkeypatch):
     """Engine handle without `create_embedding` (i.e. an ONNXEmbedder)
     must route through the new dispatch path and return OpenAI envelope."""
@@ -314,6 +311,7 @@ def test_engine_create_embedding_onnx_rejects_invalid_input_type():
 # ─────────────────────────────────────────────────────────────────
 # /v1/embeddings end-to-end via /onnx route
 # ─────────────────────────────────────────────────────────────────
+
 
 def _stub_registry_with_onnx(tmp_path: Path) -> RegistryFile:
     onnx_path = tmp_path / "model.onnx"
@@ -377,9 +375,7 @@ def test_v1_embeddings_still_rejects_unknown_format(tmp_path, monkeypatch):
     reg = RegistryFile(
         version=1,
         model_folders=[],
-        models={
-            "weird": ModelRecord(path=str(bad), format="safetensors", embedding=True)
-        },
+        models={"weird": ModelRecord(path=str(bad), format="safetensors", embedding=True)},
         settings=StudioSettings(),
     )
     app_mod = importlib.import_module("omega_studio.server.app")

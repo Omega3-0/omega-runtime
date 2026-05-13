@@ -39,6 +39,7 @@ def patched_registry(monkeypatch):
 # Unit tests — repair_tool_call_arguments
 # ─────────────────────────────────────────────────────────────────
 
+
 def test_valid_json_passes_unchanged():
     repaired, applied = repair_tool_call_arguments('{"a": 1, "b": "two"}')
     assert repaired == '{"a": 1, "b": "two"}'
@@ -104,7 +105,7 @@ def test_single_quoted_json_converted():
 def test_single_quote_repair_skipped_when_double_quotes_exist():
     """Mixed-quote strings get left alone — flipping would break valid
     apostrophes inside double-quoted values."""
-    raw = "{\"phrase\": \"it's broken\","  # not repairable but tests safety
+    raw = '{"phrase": "it\'s broken",'  # not repairable but tests safety
     repaired, applied = repair_tool_call_arguments(raw)
     # Either repaired (via trailing comma fix) or untouched, but the
     # single-to-double transform must NOT have fired.
@@ -136,14 +137,11 @@ def test_unrepairable_json_returns_none():
 # repair_response_tool_calls — walks the chat response shape
 # ─────────────────────────────────────────────────────────────────
 
+
 def test_repair_response_no_op_when_no_tool_calls():
     """Plain text responses — no tool_calls field — must pass through
     untouched and return 0."""
-    response = {
-        "choices": [
-            {"index": 0, "message": {"role": "assistant", "content": "hello"}}
-        ]
-    }
+    response = {"choices": [{"index": 0, "message": {"role": "assistant", "content": "hello"}}]}
     count = repair_response_tool_calls(response)
     assert count == 0
     assert "omega" not in response["choices"][0]
@@ -174,9 +172,7 @@ def test_repair_response_repairs_one_malformed_call():
     }
     count = repair_response_tool_calls(response)
     assert count == 1
-    args = response["choices"][0]["message"]["tool_calls"][0]["function"][
-        "arguments"
-    ]
+    args = response["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"]
     assert json.loads(args) == {"city": "SF"}
     audit = response["choices"][0]["omega"]["tool_calls_repaired"]
     assert len(audit) == 1
@@ -209,9 +205,10 @@ def test_repair_response_leaves_valid_calls_alone():
     count = repair_response_tool_calls(response)
     assert count == 0
     assert "omega" not in response["choices"][0]
-    assert response["choices"][0]["message"]["tool_calls"][0]["function"][
-        "arguments"
-    ] == '{"city": "SF"}'
+    assert (
+        response["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"]
+        == '{"city": "SF"}'
+    )
 
 
 def test_repair_response_skips_unrepairable_call():
@@ -241,9 +238,10 @@ def test_repair_response_skips_unrepairable_call():
     count = repair_response_tool_calls(response)
     assert count == 0
     # Original args untouched
-    assert response["choices"][0]["message"]["tool_calls"][0]["function"][
-        "arguments"
-    ] == "{not even close"
+    assert (
+        response["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"]
+        == "{not even close"
+    )
 
 
 def test_repair_response_handles_multiple_calls_with_mixed_states():
@@ -287,6 +285,7 @@ def test_repair_response_handles_multiple_calls_with_mixed_states():
 # End-to-end via /v1/chat/completions
 # ─────────────────────────────────────────────────────────────────
 
+
 class _FakeEngine:
     def is_loaded(self, model_id: str, *, embedding: bool = False) -> bool:
         return True
@@ -301,9 +300,7 @@ class _FakeEngine:
         return None
 
 
-def test_chat_completion_repairs_malformed_tool_call_in_response(
-    patched_registry, monkeypatch
-):
+def test_chat_completion_repairs_malformed_tool_call_in_response(patched_registry, monkeypatch):
     """The /v1/chat/completions handler must run repair_response_tool_calls
     on its way out. Verify by sending a request whose stub engine returns
     a code-fenced tool_call and checking the response has clean JSON."""

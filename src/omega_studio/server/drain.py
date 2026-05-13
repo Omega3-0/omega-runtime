@@ -108,12 +108,13 @@ async def drain_on_shutdown(tracker: InFlightTracker) -> None:
     elapsed = time.monotonic() - start
     if drained:
         log.info(
-            "shutdown: drained %d request(s) in %.2fs", initial, elapsed,
+            "shutdown: drained %d request(s) in %.2fs",
+            initial,
+            elapsed,
         )
     else:
         log.warning(
-            "shutdown: drain timeout after %.2fs; %d request(s) still in-flight, "
-            "forcing exit",
+            "shutdown: drain timeout after %.2fs; %d request(s) still in-flight, forcing exit",
             elapsed,
             tracker.count,
         )

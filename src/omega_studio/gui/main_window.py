@@ -86,12 +86,7 @@ def _vendor_llamacpp_vulkan_bin(bundle: Path) -> Path | None:
 
 
 def _html_escape_plain(s: str) -> str:
-    return (
-        s.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
-    )
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
 class _ActionCard(QFrame):
@@ -389,13 +384,17 @@ class MainWindow(QMainWindow):
         )
         actions.addWidget(
             _make_card(
-                "\u25ce", "Start API", "Launch the local OpenAI-compatible server.",
+                "\u25ce",
+                "Start API",
+                "Launch the local OpenAI-compatible server.",
                 self._start_server,
             )
         )
         actions.addWidget(
             _make_card(
-                "\u2756", "Open Chat", "Jump to Playground and test a model.",
+                "\u2756",
+                "Open Chat",
+                "Jump to Playground and test a model.",
                 self._go_playground_page,
             )
         )
@@ -453,9 +452,7 @@ class MainWindow(QMainWindow):
             self._dash_status_dot.setStyleSheet("font-size:32px;color:#f87171;")
             self._dash_status_text.setText("API is stopped")
             self._dash_hint.setText("Start the API to begin chatting.")
-        self._dash_models_count.setText(
-            f"{self._last_model_table_rows} model(s) registered"
-        )
+        self._dash_models_count.setText(f"{self._last_model_table_rows} model(s) registered")
 
     def _refresh_dashboard_labels(self) -> None:
         br = bundle_root()
@@ -464,11 +461,11 @@ class MainWindow(QMainWindow):
         self.lbl_data.setTextFormat(Qt.TextFormat.RichText)
         self.lbl_bundle.setText(
             "<b>Bundle root</b> (OMEGA_BUNDLE_ROOT)<br/>"
-            f"<span style=\"font-family:monospace\">{_html_escape_plain(str(br))}</span>"
+            f'<span style="font-family:monospace">{_html_escape_plain(str(br))}</span>'
         )
         self.lbl_data.setText(
             "<b>App data</b> (registry &amp; prefs)<br/>"
-            f"<span style=\"font-family:monospace\">{_html_escape_plain(str(ad))}</span>"
+            f'<span style="font-family:monospace">{_html_escape_plain(str(ad))}</span>'
         )
 
     # --- Session persistence (gui_settings.json + registry.json) ---
@@ -673,9 +670,7 @@ class MainWindow(QMainWindow):
         self.table_models.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table_models.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table_models.setMinimumHeight(240)
-        self.table_models.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
-        )
+        self.table_models.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.table_models.itemSelectionChanged.connect(self._on_models_selection_changed)
         outer.addWidget(self.table_models, stretch=1)
 
@@ -787,11 +782,7 @@ class MainWindow(QMainWindow):
         self.table_models.setItem(i, 3, QTableWidgetItem(row["vram"]))
         self.table_models.setItem(i, 4, self._pill_item(row["pinned"], "teal"))
         loaded_color = (
-            "green"
-            if row["loaded"] == "yes"
-            else "amber"
-            if row["loaded"] == "offline"
-            else "gray"
+            "green" if row["loaded"] == "yes" else "amber" if row["loaded"] == "offline" else "gray"
         )
         self.table_models.setItem(i, 5, self._pill_item(row["loaded"], loaded_color))
 
@@ -884,9 +875,7 @@ class MainWindow(QMainWindow):
             if gs.omega_api_key.strip():
                 headers["Authorization"] = f"Bearer {gs.omega_api_key.strip()}"
             self._log_api("PATCH", url)
-            worker = ServerPatchWorker(
-                url, {"ui_overrides": rec.ui_overrides}, headers
-            )
+            worker = ServerPatchWorker(url, {"ui_overrides": rec.ui_overrides}, headers)
             self._patch_worker = worker
             worker.succeeded.connect(lambda code: self._on_patch_succeeded(code, url))
             worker.http_error.connect(lambda code, body: self._on_patch_http_error(code, body, url))
@@ -1003,9 +992,7 @@ class MainWindow(QMainWindow):
             omega = api_item.get("omega") if isinstance(api_item, dict) else {}
 
             fmt = str(omega.get("format") or ((rec.format or "") if rec else ""))
-            acc = str(
-                omega.get("accelerator") or ((rec.accelerator or "") if rec else "")
-            ).strip()
+            acc = str(omega.get("accelerator") or ((rec.accelerator or "") if rec else "")).strip()
 
             pv = omega.get("vram_estimate_mb")
             if pv is None and rec is not None:
