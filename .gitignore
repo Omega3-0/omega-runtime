@@ -65,3 +65,9 @@ requirements-lock.txt
 # into the package right before PyInstaller runs. Never check in (would pin
 # every dev's local clone to the variant the last build target used).
 src/omega_studio/_build_info.py
+
+# Local wheel cache for variant builds. The Vulkan / DML / CUDA wheels can be
+# multi-tens-of-MB and aren't worth bloating git history. Each release
+# attaches the relevant wheels as GitHub release assets; the build script
+# picks them up locally if `vendor/wheels/<variant>/*.whl` is populated.
+vendor/wheels/

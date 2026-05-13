@@ -117,11 +117,36 @@ $env:OMEGA_VARIANT = $env:OMEGA_VARIANT
 $LlamaCppIndex = if ($env:OMEGA_LLAMA_CPP_INDEX) { $env:OMEGA_LLAMA_CPP_INDEX } else { "https://abetlen.github.io/llama-cpp-python/whl/cpu/" }
 
 Invoke-Line "& `"$PyExe`" -m pip install --upgrade pip"
+
+# Detect a local pre-built wheel for the chosen variant.
+# Layout: vendor\wheels\<variant>\llama_cpp_python-*.whl
+# Rationale: PyPI / abetlen's index only ships CPU + CUDA + Metal — no
+# Vulkan, no DML. To get cross-vendor GPU on Windows (AMD/Intel iGPU)
+# we have to ship a custom wheel. Hosting wheels under vendor\wheels\
+# (gitignored, ~20MB each) means the build script picks them up
+# automatically when an operator drops them in. Future GitHub releases
+# attach the matching wheel for download.
+$LocalWheelDir = Join-Path $Root "vendor\wheels\$($env:OMEGA_VARIANT)"
+$LocalWheel = $null
+if (Test-Path $LocalWheelDir) {
+    $LocalWheel = Get-ChildItem -Path $LocalWheelDir -Filter "llama_cpp_python-*.whl" -EA 0 | Select-Object -First 1
+}
+
+# Always install deps from requirements.txt first. The pinned
+# llama_cpp_python==0.3.22 will pull from `--extra-index-url` (the
+# CPU wheel from abetlen). If a local variant wheel exists we then
+# force-reinstall just that one package over the top — this gives
+# us a deterministic dep tree regardless of whether a local wheel
+# is present, plus a clean swap-in of the GPU-capable build.
 if (Test-Path $ReqMain) {
     Invoke-Line "& `"$PyExe`" -m pip install --extra-index-url `"$LlamaCppIndex`" -r `"$ReqMain`" pyinstaller"
 }
 else {
     Invoke-Line "& `"$PyExe`" -m pip install pyinstaller"
+}
+if ($LocalWheel) {
+    Write-Host "Overlaying local variant wheel: $($LocalWheel.FullName)"
+    Invoke-Line "& `"$PyExe`" -m pip install --force-reinstall --no-deps `"$($LocalWheel.FullName)`""
 }
 
 if ($Icon) {

@@ -83,6 +83,46 @@ CI runs both on every PR.
 Output: `dist\Omega3.0-portable\` (CLI + GUI exes via PyInstaller; smoke
 gate auto-verifies the bundle serves `/health` before declaring success).
 
+### Building a GPU-variant bundle
+
+The default build uses abetlen's CPU wheel from
+`https://abetlen.github.io/llama-cpp-python/whl/cpu/`. For GPU offload:
+
+**CUDA (NVIDIA):**
+```powershell
+$env:OMEGA_VARIANT = "cuda"
+$env:OMEGA_LLAMA_CPP_INDEX = "https://abetlen.github.io/llama-cpp-python/whl/cu122/"
+.\scripts\build_windows.ps1
+```
+
+**Vulkan (AMD / Intel / NVIDIA cross-vendor) or DML:**
+
+abetlen doesn't ship Vulkan / DML wheels. You need a custom-built
+`llama_cpp_python-*.whl` from llama-cpp-python compiled with
+`-DGGML_VULKAN=on` (or `-DGGML_BACKEND_DML=on`). Drop the wheel under
+`vendor\wheels\<variant>\` and the build script picks it up:
+
+```powershell
+mkdir vendor\wheels\vulkan
+copy your-prebuilt-llama_cpp_python-*-py3-none-win_amd64.whl `
+    vendor\wheels\vulkan\
+$env:OMEGA_VARIANT = "vulkan"
+.\scripts\build_windows.ps1
+```
+
+The build script installs deps from the CPU index first, then
+force-overlays your Vulkan wheel via
+`pip install --force-reinstall --no-deps`. The bundle ends up with
+the Vulkan-capable DLLs and `/v1/version` reports `omega_variant: vulkan`
+(baked-in via `_build_info.py` so the tag survives daemon spawn).
+
+Smoke gate validates `llama_supports_gpu_offload=true` on the built
+bundle for non-cpu variants. If that flag isn't true post-build, the
+wheel didn't actually have GPU code — investigate before shipping.
+
+`vendor/wheels/` is gitignored. Wheels travel as GitHub release assets
+when a release is cut.
+
 ## How to file a good bug
 
 Use the `Bug report` template under [Issues](../../issues/new/choose).
