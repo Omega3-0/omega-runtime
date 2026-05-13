@@ -6,6 +6,14 @@ on:
   pull_request:
     branches: [main]
 
+# Opt every JavaScript action into Node.js 24 immediately. GitHub starts
+# force-deprecating Node 20 in June 2026; setting this env var now means
+# our CI is already on the supported runtime instead of accumulating
+# deprecation warnings on every run. Per:
+# https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   test:
     name: pytest + ruff (Windows)
