@@ -313,9 +313,18 @@ class MainWindow(QMainWindow):
         _MAX_LOG_BUFFER = 5000
         if len(self._log_buffer) > _MAX_LOG_BUFFER:
             self._log_buffer = self._log_buffer[-_MAX_LOG_BUFFER:]
-        self._apply_log_filter()
-        if self._chk_log_autoscroll.isChecked():
-            self._txt_logs.moveCursor(self._txt_logs.textCursor().MoveOperation.End)
+        # Incremental append — calling _apply_log_filter() (full rebuild)
+        # for every new line froze the GUI on Start API: uvicorn emits
+        # ~30 startup log lines in under a second, each triggering an
+        # O(N) setPlainText() over the up-to-5000-line buffer. Windows
+        # marked the window "Not Responding" within 5s and force-closed.
+        # Append-only here; full rebuild happens only when the filter
+        # changes (see `_apply_log_filter`).
+        active = self._log_filter_current
+        if active == "ALL" or tag == active:
+            self._txt_logs.appendPlainText(line)
+            if self._chk_log_autoscroll.isChecked():
+                self._txt_logs.moveCursor(self._txt_logs.textCursor().MoveOperation.End)
 
     def _log_api(self, method: str, url: str, status: int | None = None) -> None:
         if status is None:
@@ -324,6 +333,9 @@ class MainWindow(QMainWindow):
             self._log_line(f"← {method} {url} — {status}", tag="API")
 
     def _apply_log_filter(self) -> None:
+        """Re-render the log view from the buffer. Called when the
+        active filter changes; the per-line append path in `_log_line`
+        is the fast path used during streaming."""
         active = self._log_filter_current
         lines = [ln for tag, ln in self._log_buffer if active == "ALL" or tag == active]
         self._txt_logs.setPlainText("\n".join(lines))
